@@ -81,7 +81,7 @@ func readFile3(filePath string) string {
 }
 
 func readMain() {
-	file := "test.go"
+	file := "test.txt"
 
 	start := time.Now()
 
@@ -117,10 +117,10 @@ func writeFile1(filePath string) {
 	d2 := []byte{97, 111, 109, 101, 10}
 	n2, err := f.Write(d2)
 	check(err)
-	fmt.Printf("writeFile1: %d\n", n2)
+	fmt.Printf("writeFile1 写入 %d 个字节\n", n2)
 
 	n3, err := f.WriteString("writeFile1\n")
-	fmt.Printf("writeFile1: %d\n", n3)
+	fmt.Printf("writeFile1 写入 %d 个字节\n", n3)
 
 	f.Sync()
 }
@@ -132,7 +132,7 @@ func writeFile2(filePath string) {
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	n4, err := w.WriteString("writeFile2\n")
-	fmt.Printf("writeFile2 %d bytes\n", n4)
+	fmt.Printf("writeFile2 写入 %d 个字节\n", n4)
 
 	w.Flush()
 

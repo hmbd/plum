@@ -80,14 +80,28 @@ param:
 	filename: 文件路径
 
 return:
-	true: 文件存在 false: 文件不存在
+	exists: 文件是否存在
+	isDir: 文件是否是目录
 */
-func checkFileIsExist(filename string) (bool) {
-	var exist = true
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		exist = false
+func checkFileIsExist(filename string) (exists bool, isDir bool) {
+	exists = true
+	f, err := os.Stat(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			exists = false
+		} else {
+			// 非文件不存在错误
+			panic(err)
+		}
 	}
-	return exist
+
+	isDir = false
+	if exists {
+		if f.IsDir() {
+			isDir = true
+		}
+	}
+	return exists, isDir
 }
 
 /*
@@ -133,9 +147,13 @@ return:
 	true: 写入成功  false: 写入失败
 */
 func writeContentFile(filename string, url string) bool {
-	existsFile := checkFileIsExist(filename)
+	existsFile, isDir := checkFileIsExist(filename)
+	if isDir {
+		fmt.Printf("%s必须是文件类型，不能是目录\n", filename)
+		os.Exit(1)
+	}
 	fmt.Println("文件中追加内容: ", filename)
-	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
+	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		panic(err)
 	}
@@ -215,19 +233,37 @@ func DownLoadVideo(url string, filename string, downList *DownLoadList) bool {
 	return true
 }
 
+func initDownPath(filePath string) {
+	exists, isDir := checkFileIsExist(filePath)
+	if exists {
+		if !isDir {
+			fmt.Printf("%s 文件已经存在，且格式非目录类型", filePath)
+			os.Exit(1)
+		}
+	} else {
+		os.Mkdir(filePath, 0755)
+	}
+}
 func downLoadMain() {
 	var downLoadList DownLoadList
 	downLoadList.Data = make(map[string][]int64)
 	downList := &downLoadList
 
-	currPath := getCurrentDirectory()
-
+	//currPath := getCurrentDirectory()
+	currPath, err := os.Getwd()
+	if err != nil {
+		fmt.Println("查询当前所在目录失败")
+		os.Exit(1)
+	}
+	downPath := path.Join(currPath, "go-video")
+	//downPath := "/tmp/go-video"
+	initDownPath(downPath)
 	// 获取网页内容
 	content, statusCode := getUrlContent(indexUrl)
 	fmt.Printf("statusCode: %d\n", statusCode)
 
 	if statusCode != 200 {
-		fmt.Println("获取网页内容失败了\n")
+		fmt.Println("获取网页内容失败了")
 		return
 	}
 
@@ -245,9 +281,13 @@ func downLoadMain() {
 	}
 
 	// 记录下载url的文件路径
-	filename := path.Join(currPath, "url.txt")
-	if checkFileIsExist(filename) {
+	filename := path.Join(downPath, "url.txt")
+	exists, isDir := checkFileIsExist(filename)
+	if exists && !isDir {
 		os.Remove(filename)
+	} else if exists && isDir{
+		fmt.Printf("文件 %s 必须是文本的格式\n", filename)
+		os.Exit(1)
 	}
 
 	// 对视频播放列表的每一个视频进行解析
@@ -282,7 +322,7 @@ func downLoadMain() {
 				}
 			}
 			wg.Add(1)
-			filePath := path.Join(currPath, title)
+			filePath := path.Join(downPath, title)
 			fmt.Printf("videoUrl: %s, fileSize: %s, filePath: %s\n", videoUrl, fileSize, filePath)
 			go DownLoadVideo(videoUrl, filePath, downList)
 		} else {
