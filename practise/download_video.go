@@ -273,6 +273,8 @@ func downLoadMain() {
 		fmt.Printf("url： %s 中没有找到视频的链接\n", indexUrl)
 		return
 	}
+	// 在 goroutine中运行，可以理解为在子线程中执行
+	// 如果不 wg.Wait() 那么在主线程执行完后，程序会立即结束，不执行子线程
 	go downList.printProgress()
 
 	// 只下载一个视频
