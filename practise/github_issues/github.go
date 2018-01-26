@@ -5,39 +5,49 @@ import (
 	"net/url"
 	"strings"
 	"net/http"
+	"fmt"
+	"encoding/json"
 )
 
 const IssuesURL = "https://api.github.com/search/issues"
 
-type IssusesSearchResult struct{
+type IssusesSearchResult struct {
 	TotalCount int `json:"total_count"`
-	Items []*Issue
+	Items      []*Issue
 }
 
-type Issue struct{
-	Number int
-	HTMLURL string `json:"html_url"'`
-	Title string
-	State string
-	User *User
+type Issue struct {
+	Number    int
+	HTMLURL   string    `json:"html_url"'`
+	Title     string
+	State     string
+	User      *User
 	CreatedAt time.Time `json:"create_at"`
-	Body string
+	Body      string
 }
 
-type User struct{
-	Login string
+type User struct {
+	Login   string
 	HTMLURL string `json:"html_url"`
 }
 
-
-func SearchIssues(terms []string)(*IssusesSearchResult, error){
+func SearchIssues(terms []string) (*IssusesSearchResult, error) {
 	q := url.QueryEscape(strings.Join(terms, " "))
-	resp , err := http.Get(IssuesURL + "?q=" + q)
-	if err != nil{
+	resp, err := http.Get(IssuesURL + "?q=" + q)
+	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK{
-
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("search query failed: %s", resp.Status)
 	}
+
+	var result IssusesSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, err
+	}
+	resp.Body.Close()
+	return &result, nil
 }

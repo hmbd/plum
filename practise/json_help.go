@@ -9,7 +9,7 @@ import (
 type Movie struct {
 	Title  string
 	Year   int  `json:"released"`
-	Color  bool `json:"color,omitempty"`
+	Color  bool `json:"color,omitempty"` // omitempty 表示当Go语言结构体成员为空或零值时不生成JSON对象,即该值会不存在
 	Actors []string
 }
 
@@ -41,6 +41,7 @@ func test1() {
 		},
 		// ...
 	}
+	// 把结构体转成 json
 	data, err := json.Marshal(movies)
 	if err != nil {
 		log.Fatalf("JSON marshaling failed: %s", err)
@@ -52,6 +53,13 @@ func test1() {
 		log.Fatalf("JSON marshaling failed: %s", err1)
 	}
 	fmt.Printf("%s\n", data1)
+
+	// 把json转成 结构体
+	var titles []struct{ Title string }
+	if err := json.Unmarshal(data, &titles); err != nil {
+		log.Fatalf("JSON unmarshaling failed: %s", err)
+	}
+	fmt.Println(titles)
 }
 
 func main() {
