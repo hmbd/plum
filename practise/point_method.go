@@ -3,10 +3,21 @@ package main
 import (
 	"math"
 	"fmt"
+	"image/color"
 )
 
 type Point struct {
 	x, y float64
+}
+
+type ColoredPoint struct {
+	Point
+	Color color.RGBA
+}
+
+type ColoredPoint1 struct {
+	*Point
+	Color color.RGBA
 }
 
 type Path []Point
@@ -42,7 +53,50 @@ func (p *Point) ScaleBy(factor float64) {
 	p.x *= factor
 	p.y *= factor
 }
-func main() {
+
+func (p ColoredPoint) Distance(q Point) float64 {
+	return p.Point.Distance(q)
+}
+
+func (p *ColoredPoint) ScaleBy(factor float64) {
+	p.Point.ScaleBy(factor)
+}
+
+func testColorPoint() {
+
+	var cp ColoredPoint
+	cp.x = 1
+	fmt.Println(cp.Point.x)
+	fmt.Println(cp.x)
+
+	red := color.RGBA{255, 0, 0, 255}
+	blue := color.RGBA{0, 0, 255, 255}
+	var p = ColoredPoint{Point{1, 2}, red}
+	var q = ColoredPoint{Point{3, 4}, blue}
+	fmt.Println(p.Distance(q.Point))
+	p.ScaleBy(2)
+	q.ScaleBy(3)
+}
+
+func testColorPoint1() {
+
+	var cp ColoredPoint1
+	cp.x = 1
+	fmt.Println(cp.Point.x)
+	fmt.Println(cp.x)
+
+	red := color.RGBA{255, 0, 0, 255}
+	blue := color.RGBA{0, 0, 255, 255}
+	var p = ColoredPoint1{&Point{1, 2}, red}
+	var q = ColoredPoint1{&Point{3, 4}, blue}
+	fmt.Println(p.Distance(*q.Point))
+	p.ScaleBy(2)
+	q.ScaleBy(3)
+	fmt.Println(*p.Point, *q.Point)
+}
+
+func testPoint() {
+
 	p := Point{x: 1, y: 2}
 	q := Point{x: 4, y: 6}
 	fmt.Println(Distance(p, q))
@@ -72,5 +126,9 @@ func main() {
 	//不能通过一个无法取到地址的接收器来调用指针方法，比如临时变量的内存地址就无法获取得到
 	//Point{1, 2}.ScaleBy(2) // compile error: can't take address of Point literal
 	Point{1, 2}.Distance(p2) //
-
+}
+func main() {
+	testPoint()
+	testColorPoint()
+	testColorPoint1()
 }
