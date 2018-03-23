@@ -11,6 +11,7 @@ type simpleCN struct {
 
 // 创建针对中文聊天的机器人
 func NewSimpleCN(name string, talk Talk) Chatbot {
+	// simple 同时实现了接口 Talk 和 Chatbot 的方法  返回哪一类interface 都可以
 	return &simpleCN{
 		name: name,
 		talk: talk,

@@ -11,6 +11,7 @@ type simpleEN struct {
 
 // 创建针对英文聊天的机器人
 func NewSimpleEN(name string, talk Talk) Chatbot {
+	// simple 同时实现了接口 Talk 和 Chatbot 的方法  返回哪一类interface 都可以
 	return &simpleEN{
 		name: name,
 		talk: talk,

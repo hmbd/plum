@@ -41,6 +41,9 @@ func checkError(chatbot chatbot.Chatbot, err error, exit bool) bool {
 
 func main() {
 	flag.Parse()
+
+	// nil 可以表示任何指针类型和interface ,  就像表示空指针可以代表 *int , *string
+	// 在实例化时传入的是 nil, 在使用过程中进行了判断, 不等于 nil 怎么样怎么样
 	chatbot.Register(chatbot.NewSimpleEN("simple.en", nil))
 	chatbot.Register(chatbot.NewSimpleCN("simple.cn", nil))
 	myChatbot := chatbot.Get(chatbotName)
