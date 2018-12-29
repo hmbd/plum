@@ -32,6 +32,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+*.pyc
 
 # Mac
 .DS_Store
