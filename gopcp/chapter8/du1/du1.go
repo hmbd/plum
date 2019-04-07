@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
-	"io/ioutil"
-	"fmt"
-	"path/filepath"
 	"flag"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 func dirents(dir string) []os.FileInfo {

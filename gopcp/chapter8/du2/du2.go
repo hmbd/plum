@@ -1,40 +1,30 @@
 package main
 
 import (
-	"os"
-	"io/ioutil"
-	"fmt"
-	"path/filepath"
 	"flag"
-	"sync"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 )
 
-var vFlag = flag.Bool("v", false, "show verbose progress messages")
-
-// 限制goroutine数量
-var sema = make(chan struct{}, 20)
+var verbose = flag.Bool("v", false, "show verbose progress messages")
 
 func dirents(dir string) []os.FileInfo {
-	sema <- struct{}{}
-	defer func() {
-		<-sema
-	}()
 	entries, err := ioutil.ReadDir(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "du3: %v\n", err)
+		fmt.Fprintf(os.Stderr, "du2: %v\n", err)
 		return nil
 	}
 	return entries
 }
 
-func walkDir(dir string, n *sync.WaitGroup, fileSizes chan<- int64) {
-	defer n.Done()
+func walkDir(dir string, fileSizes chan<- int64) {
 	for _, entry := range dirents(dir) {
 		if entry.IsDir() {
-			n.Add(1)
 			subdir := filepath.Join(dir, entry.Name())
-			go walkDir(subdir, n, fileSizes)
+			walkDir(subdir, fileSizes)
 		} else {
 			fileSizes <- entry.Size()
 		}
@@ -47,28 +37,24 @@ func printDiskUsage(nfiles, nbytes int64) {
 
 func main() {
 	flag.Parse()
-
 	roots := flag.Args()
+
 	if len(roots) == 0 {
 		roots = []string{"."}
 	}
 
 	fileSizes := make(chan int64)
 
-	var n sync.WaitGroup
-	for _, root := range roots {
-		n.Add(1)
-		go walkDir(root, &n, fileSizes)
-	}
-
 	go func() {
-		n.Wait()
+		for _, root := range roots {
+			walkDir(root, fileSizes)
+		}
 		close(fileSizes)
 	}()
 
 	var tick <-chan time.Time
 
-	if *vFlag {
+	if *verbose {
 		tick = time.Tick(500 * time.Millisecond)
 	}
 	var nfiles, nbytes int64
@@ -85,4 +71,6 @@ loop:
 			printDiskUsage(nfiles, nbytes)
 		}
 	}
+
+	printDiskUsage(nfiles, nbytes)
 }
